@@ -1,16 +1,15 @@
 """subscriber_manager.py — PostgreSQL 기반 구독자 관리"""
 import os
 import json
-import psycopg
-
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 
 def _connect():
-    return psycopg.connect(os.environ["DATABASE_URL"])
+    return psycopg2.connect(os.environ["DATABASE_URL"], sslmode="require")
 
 
 def init_db():
-    """테이블 초기화 (최초 1회 실행)"""
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -54,7 +53,7 @@ def remove_subscriber(email: str) -> str:
 
 def list_subscribers() -> list:
     with _connect() as conn:
-        with conn.cursor(with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:) as cur:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT email, name, topics FROM subscribers WHERE active = TRUE")
             rows = cur.fetchall()
     result = []
