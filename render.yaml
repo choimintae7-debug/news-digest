@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: news-digest
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app -c gunicorn.conf.py
+    envVars:
+      - key: NEWSAPI_KEY
+        sync: false
+      - key: GMAIL_ADDRESS
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: SENDER_NAME
+        sync: false
+      - key: NAVER_CLIENT_ID
+        sync: false
+      - key: NAVER_CLIENT_SECRET
+        sync: false
+      - key: SEND_HOUR
+        sync: false
+      - key: SEND_MINUTE
+        sync: false
+      - key: DATABASE_URL
+        sync: false
