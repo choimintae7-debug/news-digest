@@ -67,10 +67,7 @@ def send_newsletter(to_email: str, name: str, articles_by_topic: dict) -> bool:
     msg.attach(MIMEText(_build_html(name, articles_by_topic), "html", "utf-8"))
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
             server.sendmail(GMAIL_ADDRESS, to_email, msg.as_string())
         print(f"  ✅ 발송 성공 → {to_email}")
