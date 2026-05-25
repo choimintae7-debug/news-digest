@@ -1,11 +1,13 @@
-"""email_sender.py — Resend API를 통한 HTML 뉴스레터 발송"""
-import os
+"""email_sender.py — Gmail SMTP (포트 587) 발송"""
+import smtplib
 import datetime
-import resend
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import os
 
-resend.api_key = os.environ.get("RESEND_API_KEY", "")
-SENDER_NAME  = os.environ.get("SENDER_NAME", "뉴스 다이제스트")
-SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+GMAIL_ADDRESS      = os.environ.get("GMAIL_ADDRESS", "")
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
+SENDER_NAME        = os.environ.get("SENDER_NAME", "뉴스 다이제스트")
 
 
 def _source_badge(from_: str) -> str:
@@ -58,13 +60,19 @@ def _build_html(name: str, articles_by_topic: dict) -> str:
 
 def send_newsletter(to_email: str, name: str, articles_by_topic: dict) -> bool:
     today = datetime.date.today().strftime("%Y/%m/%d")
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"📬 [{today}] 오늘의 뉴스 다이제스트"
+    msg["From"]    = f"{SENDER_NAME} <{GMAIL_ADDRESS}>"
+    msg["To"]      = f"{name} <{to_email}>"
+    msg.attach(MIMEText(_build_html(name, articles_by_topic), "html", "utf-8"))
+
     try:
-        resend.Emails.send({
-            "from": f"{SENDER_NAME} <{SENDER_EMAIL}>",
-            "to": [to_email],
-            "subject": f"📬 [{today}] 오늘의 뉴스 다이제스트",
-            "html": _build_html(name, articles_by_topic),
-        })
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+            server.sendmail(GMAIL_ADDRESS, to_email, msg.as_string())
         print(f"  ✅ 발송 성공 → {to_email}")
         return True
     except Exception as e:
